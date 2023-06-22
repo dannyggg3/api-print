@@ -23,26 +23,30 @@ class PrintController extends Controller
             $cliente = $data['cliente'];
             $idPedido = $data['idPedido'];
             $cantidad = $data['cantidad'];
-
-            $profile = CapabilityProfile::load("SP2000");
-            $connector = new WindowsPrintConnector("smb://192.168.139.1/ZDesigner ZD230-203dpi ZPL");
-            $printer = new Printer($connector, $profile);
-
-            $printer = new Printer($connector);
-
-            $archivoZpl = 'public/lbl/label.zpl'; // Ruta relativa al archivo dentro de storage/app/public
-            $rutaArchivoZpl = Storage::path($archivoZpl);
-            $contenidoZpl = file_get_contents($rutaArchivoZpl);
-
-            
-            $numImpresiones = $cantidad; // Número de veces que se desea imprimir
+            $numImpresiones = $cantidad;
 
             for ($i = 0; $i < $numImpresiones; $i++) {
-                $printer->textRaw($contenidoZpl);
-                $printer->cut();
-            }
-            $printer->close();
+                $profile = CapabilityProfile::load("SP2000");
+                $connector = new WindowsPrintConnector("smb://192.168.139.1/ZDesigner ZD230-203dpi ZPL");
+                $printer = new Printer($connector, $profile);
+    
+                $printer = new Printer($connector);
+    
+                $archivoZpl = 'public/lbl/label.zpl'; // Ruta relativa al archivo dentro de storage/app/public
+                $rutaArchivoZpl = Storage::path($archivoZpl);
+                $contenidoZpl = file_get_contents($rutaArchivoZpl);
+                $contenidoZpl=str_replace('[[PARA]]',$cliente,$contenidoZpl);
+                $contenidoZpl=str_replace('[[DE]]',$nombre,$contenidoZpl);
+                $contenidoZpl=str_replace('[[DIRECCION]]',$direccion,$contenidoZpl);
 
+                $numImpresiones = $cantidad; // Número de veces que se desea imprimir
+
+                    $printer->textRaw($contenidoZpl);
+                    //$printer->textRaw("^XZ"); 
+                
+                $printer->close();
+                
+            }
             return response()->json(['correctProcess'=>true,'message' => 'Impresión realizada correctamente']);
         } catch (\Throwable $th) {
             return response()->json(['correctProcess'=>false,'message' => $th->getMessage()]);
